@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HPE Networking LATAM · Field Marketing Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface2: #f0f0ee;
+    --border: #e0dede;
+    --border2: #c8c8c8;
+    --text: #1a1a1a;
+    --text2: #555555;
+    --text3: #888888;
+    --hpe-green: #01a982;
+    --hpe-green-dark: #007d62;
+    --hpe-green-dim: rgba(1,169,130,0.10);
+    --hpe-green-mid: rgba(1,169,130,0.20);
+    --hpe-navy: #0d5265;
+    --blue: #0073e6;
+    --blue-dim: rgba(0,115,230,0.10);
+    --amber: #c8670a;
+    --amber-dim: rgba(200,103,10,0.10);
+    --red: #c00;
+    --red-dim: rgba(204,0,0,0.10);
+    --purple: #6633cc;
+    --coral: #e05e2a;
+    --radius: 4px;
+    --radius-sm: 2px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .topbar-outer {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .topbar-green-stripe {
+    height: 4px;
+    background: var(--hpe-green);
+  }
+  .topbar {
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+  .hpe-logo-svg {
+    height: 28px; width: auto;
+  }
+
+  .topbar-divider {
+    width: 1px; height: 28px;
+    background: var(--border2);
+  }
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+  .topbar-sub { font-size: 12px; color: var(--text3); }
+  .topbar-badge {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px; font-weight: 500;
+    background: var(--hpe-green-dim);
+    color: var(--hpe-green-dark);
+    padding: 4px 12px; border-radius: 2px;
+    border: 1px solid rgba(1,169,130,0.3);
+    letter-spacing: 0.03em;
+  }
+
+  .hero-band {
+    background: var(--hpe-navy);
+    padding: 1.5rem 2rem;
+    color: #fff;
+  }
+  .hero-band-inner { max-width: 1200px; margin: 0 auto; }
+  .hero-band h1 { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
+  .hero-band p { font-size: 13px; color: rgba(255,255,255,0.65); }
+
+  .main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  .section-header {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; font-weight: 500;
+    color: var(--hpe-green-dark);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--hpe-green);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-header::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--hpe-green);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent, var(--hpe-green));
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s;
+  }
+  .kpi-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
+  .kpi-card.blue   { --accent: var(--blue); }
+  .kpi-card.amber  { --accent: var(--amber); }
+  .kpi-card.red    { --accent: var(--red); }
+  .kpi-card.purple { --accent: var(--purple); }
+  .kpi-card.coral  { --accent: var(--coral); }
+  .kpi-card.navy   { --accent: var(--hpe-navy); }
+
+  .kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  .kpi-val { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 5px; }
+  .kpi-gap { font-size: 11px; color: var(--red); margin-top: 5px; font-weight: 600; }
+
+  .charts-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 2rem; }
+  .charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 2rem; }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.4rem;
+    box-shadow: var(--shadow);
+  }
+
+  .chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .chart-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 12px; font-size: 11px; color: var(--text2);
+  }
+  .leg { display: flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  .chart-wrap { position: relative; }
+
+  .notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2rem; }
+
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--note-color, var(--border2));
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 0.9rem 1.1rem;
+    display: flex; gap: 10px; align-items: flex-start;
+    box-shadow: var(--shadow);
+  }
+  .note-card.danger { --note-color: var(--red); }
+  .note-card.warn   { --note-color: var(--amber); }
+  .note-card.info   { --note-color: var(--blue); }
+  .note-card.ok     { --note-color: var(--hpe-green); }
+
+  .note-badge {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 9px; font-weight: 600;
+    padding: 2px 8px; border-radius: 2px;
+    white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .note-card.danger .note-badge { background: var(--red-dim); color: var(--red); border: 1px solid rgba(204,0,0,0.2); }
+  .note-card.warn   .note-badge { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(200,103,10,0.2); }
+  .note-card.info   .note-badge { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(0,115,230,0.2); }
+  .note-card.ok     .note-badge { background: var(--hpe-green-dim); color: var(--hpe-green-dark); border: 1px solid rgba(1,169,130,0.25); }
+
+  .note-text { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+  .footer {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px; color: var(--text3);
+    text-align: center; padding: 2rem 0 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0 2rem; }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid-2, .charts-grid-3, .notes-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar-outer">
+  <div class="topbar-green-stripe"></div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <svg class="hpe-logo-svg" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="22" font-family="'Source Sans 3',Arial,sans-serif" font-size="22" font-weight="700" fill="#01a982" letter-spacing="-1">HPE</text>
+      </svg>
+      <div class="topbar-divider"></div>
+      <div>
+        <div class="topbar-title">LATAM Field Marketing</div>
+        <div class="topbar-sub">HPE Networking · Channel Marketing Support</div>
+      </div>
+    </div>
+    <div class="topbar-badge">FY25 Q4 – FY26 Q2</div>
+  </div>
+</div>
+
+<div class="hero-band">
+  <div class="hero-band-inner">
+    <h1>Field Marketing Performance Dashboard</h1>
+    <p>HPE Networking · Latin America · Event analysis across Brazil, MCA and Mexico</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="section-header">Key performance indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total events in portfolio</div>
+      <div class="kpi-val">173</div>
+      <div class="kpi-sub">3 regions · 4 quarters</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Completed events</div>
+      <div class="kpi-val">83</div>
+      <div class="kpi-sub">47% completion rate</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Total investment (USD)</div>
+      <div class="kpi-val">$2.1M</div>
+      <div class="kpi-sub">Activity cost across all events</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Pipeline generated (OPP $)</div>
+      <div class="kpi-val">$12.1M</div>
+      <div class="kpi-sub">From 19 of 83 completed events</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Total attendees</div>
+      <div class="kpi-val">2,878</div>
+      <div class="kpi-sub">Across completed events</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">AQL generated</div>
+      <div class="kpi-val">300</div>
+      <div class="kpi-sub">MQL total: 310</div>
+    </div>
+    <div class="kpi-card coral">
+      <div class="kpi-label">Target audience reach</div>
+      <div class="kpi-val">26.4K</div>
+      <div class="kpi-sub">Customers + partners targeted</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Won # / Won $</div>
+      <div class="kpi-val">—</div>
+      <div class="kpi-gap">100% missing — critical gap</div>
+    </div>
+  </div>
+
+  <div class="section-header">Event portfolio overview</div>
+  <div class="charts-grid-2">
+
+    <div class="chart-card">
+      <div class="chart-title">Event status breakdown</div>
+      <div class="chart-sub">All 173 events in portfolio</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>Completed 83</span>
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Scheduled 39</span>
+        <span class="leg"><span class="leg-dot" style="background:#ef4444"></span>Declined 36</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Cancelled 13</span>
+        <span class="leg"><span class="leg-dot" style="background:#555a6a"></span>Planned 2</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="c1" role="img" aria-label="Donut chart of event status">83 completed, 39 scheduled, 36 declined, 13 cancelled, 2 planned.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Completed events by region — quarter over quarter</div>
+      <div class="chart-sub">FY25 Q4 → FY26 Q1 → FY26 Q2</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Brazil</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>MCA</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Mexico</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="c2" role="img" aria-label="Stacked bar of completed events by region per quarter">FY25 Q4: Brazil 1, MCA 5, Mexico 7. FY26 Q1: Brazil 18, MCA 15, Mexico 13. FY26 Q2: Brazil 12, MCA 5, Mexico 5.</canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="charts-grid-2">
+
+    <div class="chart-card">
+      <div class="chart-title">Total investment by region (USD)</div>
+      <div class="chart-sub">Completed events only · line = # completed</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Brazil $423K</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>MCA $475K</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Mexico $413K</span>
+        <span class="leg"><span class="leg-dot" style="background:#8b5cf6;border-radius:50%"></span># Completed</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="c3" role="img" aria-label="Bar chart of investment by region completed events only with completed count line">Brazil $423K 31 completed, MCA $475K 25 completed, Mexico $413K 25 completed.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Pipeline value by region (OPP $)</div>
+      <div class="chart-sub">Completed + Scheduled + Planned · line = # events</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Brazil $7.8M</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Mexico $3.0M</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>MCA $1.3M</span>
+        <span class="leg"><span class="leg-dot" style="background:#8b5cf6;border-radius:50%"></span># Events</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="c4" role="img" aria-label="Bar chart of pipeline by region with event count line">Brazil $7.8M 52 events, Mexico $3.0M 28 events, MCA $1.3M 39 events.</canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section-header">Strategy &amp; approach</div>
+  <div class="charts-grid-3">
+
+    <div class="chart-card">
+      <div class="chart-title">GTM strategy mix</div>
+      <div class="chart-sub">By number of events</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Field Mktg 100</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>Channel Mktg 46</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>HPE Net. Day 18</span>
+        <span class="leg"><span class="leg-dot" style="background:#8b5cf6"></span>Webinar 7</span>
+      </div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="c5" role="img" aria-label="Donut of GTM strategy mix">Field Marketing 100, Channel Marketing 46, HPE Networking Day 18, Customer Webinar 7, Service Provider 2.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">ABX approach</div>
+      <div class="chart-sub">Account-based targeting model</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#8b5cf6"></span>1:Few 67</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>1:Many 54</span>
+        <span class="leg"><span class="leg-dot" style="background:#f97316"></span>1:1 31</span>
+      </div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="c6" role="img" aria-label="Donut of ABX approach">1:Few 67, 1:Many 54, 1:1 31.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Event type</div>
+      <div class="chart-sub">Who leads the event</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>HPE-Led 78</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>3rd Party 58</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Partner-Led 33</span>
+      </div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="c7" role="img" aria-label="Donut of event type">HPE-Led 78, 3rd Party 58, Partner-Led 33, Sales 1.</canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="charts-grid-2">
+
+    <div class="chart-card">
+      <div class="chart-title">GTM objective distribution</div>
+      <div class="chart-sub">By event count</div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="c9" role="img" aria-label="Bar chart of GTM objectives">Pipeline Generation 72, New Business 14, Accelerate Business 14, Brand Awareness 13, Enablement 5.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Top 8 events — investment vs. pipeline</div>
+      <div class="chart-sub">Completed events only · con OPP value registrado</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Investment</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>Pipeline (OPP $)</span>
+      </div>
+      <div class="chart-wrap" style="height:320px;">
+        <canvas id="c8" role="img" aria-label="Horizontal bar chart of investment vs pipeline per top event">Top event: HPE Networking Day Brazil with $6.3M pipeline.</canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+  <div class="section-header">Análisis combinado</div>
+
+  <div class="chart-card" style="margin-bottom:16px;">
+    <div class="chart-title">Event status × FY quarter × GEO</div>
+    <div class="chart-sub">Distribución de estatus por región y trimestre</div>
+    <div class="legend">
+      <span class="leg"><span class="leg-dot" style="background:#01a982"></span>Completed</span>
+      <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Scheduled</span>
+      <span class="leg"><span class="leg-dot" style="background:#ef4444"></span>Declined</span>
+      <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Cancelled</span>
+    </div>
+    <div class="chart-wrap" style="height:280px;">
+      <canvas id="c10" role="img" aria-label="Grouped bar chart of event status by region and quarter">Status breakdown by region per quarter.</canvas>
+    </div>
+  </div>
+
+  <div class="charts-grid-2">
+
+    <div class="chart-card">
+      <div class="chart-title">Primary audience × GEO</div>
+      <div class="chart-sub">Tipo de audiencia por región</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Customer Only</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>Customer &amp; Partner</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Partner Only</span>
+      </div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="c11" role="img" aria-label="Stacked bar of primary audience by region">Customer Only: Brazil 61, MCA 19, Mexico 26. Customer and Partner: Brazil 16, MCA 14, Mexico 2. Partner Only: Brazil 2, MCA 10, Mexico 4.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Event format × GEO &amp; FY quarter</div>
+      <div class="chart-sub">In-person vs. virtual por región y trimestre · 35 sin formato</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>In-person</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>Online/Virtual</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Hybrid</span>
+      </div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="c12" role="img" aria-label="Grouped bar of event format by region and quarter">In-person dominant across all regions.</canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="charts-grid-2">
+
+    <div class="chart-card">
+      <div class="chart-title">% Efectividad MQL por región y trimestre</div>
+      <div class="chart-sub">MQL Converted ÷ MQL Total · solo eventos con datos</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>% por GEO</span>
+        <span class="leg"><span class="leg-dot" style="background:#8b5cf6"></span>% por trimestre</span>
+      </div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="c13" role="img" aria-label="Bar chart of MQL conversion rate by region and quarter">MCA 80.8%, Brazil 79.2%, Mexico 47.3%. Q4 79.2%, Q1 79.9%, Q2 0%.</canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">ROI por evento completado × GEO</div>
+      <div class="chart-sub">Solo 16 eventos con valor ROI registrado · completados</div>
+      <div class="legend">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Brazil avg 216x</span>
+        <span class="leg"><span class="leg-dot" style="background:#01a982"></span>MCA avg 50x</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Mexico avg 46x</span>
+      </div>
+      <div class="chart-wrap" style="height:300px;">
+        <canvas id="c14" role="img" aria-label="Horizontal bar chart of ROI per completed event by region">Brazil HPE Networking Day ROI 560x, 1:1 Meetings 400x. Mexico VeeamOn 170x. MCA HPEAN Day 113x.</canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+  <div class="section-header">Analyst notes — data quality &amp; performance signals</div>
+  <div class="notes-grid">
+
+    <div class="note-card danger">
+      <span class="note-badge">Critical</span>
+      <span class="note-text">Won # and Won $ are 100% empty across all 173 events. Without closed-won tracking, ROI defense to finance is impossible and budget justification is purely directional.</span>
+    </div>
+    <div class="note-card danger">
+      <span class="note-badge">Critical</span>
+      <span class="note-text">Pipeline (OPP $) recorded for only 19 of 83 completed events — 77% missing. The $12.1M figure almost certainly understates true pipeline generated.</span>
+    </div>
+    <div class="note-card warn">
+      <span class="note-badge">Data gap</span>
+      <span class="note-text">AQL/MQL data covers only ~20 events. 81% of the portfolio has no lead data — either leads aren't being requested or registration isn't tracked systematically.</span>
+    </div>
+    <div class="note-card warn">
+      <span class="note-badge">Data gap</span>
+      <span class="note-text">Industry vertical is blank or "All" for ~70% of events. Vertical penetration reporting — education, health, retail, hospitality — is not viable with current data quality.</span>
+    </div>
+    <div class="note-card warn">
+      <span class="note-badge">Data gap</span>
+      <span class="note-text">GEO Approval Date is missing for 41% of completed events. Internal process compliance and retroactive approval detection cannot be audited without this field.</span>
+    </div>
+    <div class="note-card info">
+      <span class="note-badge">Performance</span>
+      <span class="note-text">Brazil drives the most pipeline ($7.8M), but this is heavily skewed by HPE Networking Day alone ($6.3M OPP). Excluding that event, Brazil and Mexico are roughly comparable.</span>
+    </div>
+    <div class="note-card info">
+      <span class="note-badge">Performance</span>
+      <span class="note-text">FY26 Q1 saw a sharp ramp-up to 48 completions from 13 in Q4. Q2 completions dropped to 22 while Q2 budget spend is highest at $1.14M — many events still in-flight.</span>
+    </div>
+    <div class="note-card warn">
+      <span class="note-badge">Portfolio</span>
+      <span class="note-text">36 declined + 13 cancelled = 28% of portfolio consumed planning resources without execution. Brazil accounts for 31 of the 36 declines — a significant drag on efficiency.</span>
+    </div>
+    <div class="note-card ok">
+      <span class="note-badge">Positive</span>
+      <span class="note-text">Pipeline-to-investment ratio for events with data: ~5.8x ($12.1M on $2.1M spend). Even with incomplete OPP data, the directional signal for program ROI is strong.</span>
+    </div>
+    <div class="note-card info">
+      <span class="note-badge">ABX note</span>
+      <span class="note-text">1:Few is the dominant approach (67 events), consistent with mid-funnel demand generation. However 12% of events have no ABX type assigned, limiting strategic segmentation accuracy.</span>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    HPE Networking LATAM · Field Marketing Dashboard · Data source: FY26 LATAM MASTERPLAN_MARKETING · Generated for Channel Marketing Support role assessment
+  </div>
+
+</div>
+
+<script>
+Chart.defaults.color = '#666666';
+Chart.defaults.font.family = "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif";
+Chart.defaults.font.size = 11;
+const grid = 'rgba(0,0,0,0.07)';
+
+const pctPlugin = {
+  id:'pctLabel',
+  afterDatasetDraw(chart){
+    const {ctx,data}=chart;
+    const ds=data.datasets[0];
+    const total=ds.data.reduce((a,b)=>a+b,0);
+    chart.getDatasetMeta(0).data.forEach((arc,i)=>{
+      const pct=Math.round(ds.data[i]/total*100);
+      if(pct<4) return;
+      const {x,y}=arc.tooltipPosition();
+      ctx.save();
+      ctx.fillStyle='rgba(255,255,255,0.95)';
+      ctx.font="bold 10px 'Source Sans 3',Arial,sans-serif";
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(pct+'%',x,y);
+      ctx.restore();
+    });
+  }
+};
+
+const barLabelPlugin = {
+  id:'barLabel',
+  afterDatasetDraw(chart,args){
+    const {ctx}=chart;
+    const meta=chart.getDatasetMeta(args.index);
+    if(meta.type!=='bar') return;
+    meta.data.forEach((bar,i)=>{
+      const val=chart.data.datasets[args.index].data[i];
+      if(!val) return;
+      ctx.save();
+      ctx.fillStyle='#333333';
+      ctx.font="11px 'Source Sans 3',Arial,sans-serif";
+      ctx.textAlign='center';
+      ctx.textBaseline='bottom';
+      const isHoriz=chart.options.indexAxis==='y';
+      if(isHoriz){
+        ctx.textAlign='left';
+        ctx.textBaseline='middle';
+        ctx.fillText('$'+Math.round(val/1000)+'K', bar.x+4, bar.y);
+      } else {
+        ctx.fillText(val, bar.x, bar.y-3);
+      }
+      ctx.restore();
+    });
+  }
+};
+
+new Chart(document.getElementById('c1'), {
+  type:'doughnut',
+  data:{ labels:['Completed','Scheduled','Declined','Cancelled','Planned'], datasets:[{ data:[83,39,36,13,2], backgroundColor:['#01a982','#3b82f6','#ef4444','#f59e0b','#555a6a'], borderWidth:0, hoverOffset:4 }] },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.label+': '+c.raw+' ('+Math.round(c.raw/173*100)+'%)'}} } },
+  plugins:[pctPlugin]
+});
+
+new Chart(document.getElementById('c2'), {
+  type:'bar',
+  data:{
+    labels:['FY25 Q4','FY26 Q1','FY26 Q2'],
+    datasets:[
+      { label:'Brazil', data:[1,18,12], backgroundColor:'#3b82f6' },
+      { label:'MCA',    data:[5,15,5],  backgroundColor:'#01a982' },
+      { label:'Mexico', data:[7,13,5],  backgroundColor:'#f59e0b' }
+    ]
+  },
+  options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true,grid:{color:grid}}, y:{stacked:true,grid:{color:grid}} }, plugins:{ legend:{display:false}, datalabels:{display:false} } },
+  plugins:[barLabelPlugin]
+});
+
+new Chart(document.getElementById('c3'), {
+  type:'bar',
+  data:{
+    labels:['Brazil','MCA','Mexico'],
+    datasets:[
+      { type:'bar', label:'Investment (USD)', data:[423430,475157,413000], backgroundColor:['#3b82f6','#01a982','#f59e0b'], borderWidth:0, yAxisID:'y' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>' $'+Math.round(c.raw).toLocaleString()}},
+      afterDraw: undefined
+    },
+    scales:{
+      x:{grid:{color:grid}},
+      y:{grid:{color:grid}, ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}
+    }
+  },
+  plugins:[{
+    id:'overlayCount3',
+    afterDatasetDraw(chart){
+      const {ctx}=chart;
+      const counts=[31,25,25];
+      const pcts=['40%','32%','32%'];
+      chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+        ctx.save();
+        ctx.fillStyle='rgba(255,255,255,0.95)';
+        ctx.font="bold 11px 'Source Sans 3',Arial,sans-serif";
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(counts[i]+' events ('+pcts[i]+')', bar.x, bar.y+14);
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+new Chart(document.getElementById('c4'), {
+  type:'bar',
+  data:{
+    labels:['Brazil','Mexico','MCA'],
+    datasets:[
+      { type:'bar', label:'Pipeline OPP $', data:[7847298,3000698,1289868], backgroundColor:['#3b82f6','#f59e0b','#01a982'], borderWidth:0, yAxisID:'y' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>' $'+Math.round(c.raw).toLocaleString()}}
+    },
+    scales:{
+      x:{grid:{color:grid}},
+      y:{grid:{color:grid}, ticks:{callback:v=>'$'+Math.round(v/1000000)+'M'}}
+    }
+  },
+  plugins:[{
+    id:'overlayCount4',
+    afterDatasetDraw(chart){
+      const {ctx}=chart;
+      const counts=[52,28,39];
+      const pcts=['42%','23%','31%'];
+      chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+        ctx.save();
+        ctx.fillStyle='rgba(255,255,255,0.95)';
+        ctx.font="bold 11px 'Source Sans 3',Arial,sans-serif";
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(counts[i]+' events ('+pcts[i]+')', bar.x, bar.y+14);
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+new Chart(document.getElementById('c5'), {
+  type:'doughnut',
+  data:{ labels:['Field Marketing','Channel Marketing','HPE Networking Day','Customer Webinar','Service Provider'], datasets:[{ data:[100,46,18,7,2], backgroundColor:['#3b82f6','#01a982','#f59e0b','#8b5cf6','#555a6a'], borderWidth:0, hoverOffset:4 }] },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'58%', plugins:{ legend:{display:false} } },
+  plugins:[pctPlugin]
+});
+
+new Chart(document.getElementById('c6'), {
+  type:'doughnut',
+  data:{ labels:['1:Few','1:Many','1:1'], datasets:[{ data:[67,54,31], backgroundColor:['#8b5cf6','#01a982','#f97316'], borderWidth:0, hoverOffset:4 }] },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'58%', plugins:{ legend:{display:false} } },
+  plugins:[pctPlugin]
+});
+
+new Chart(document.getElementById('c7'), {
+  type:'doughnut',
+  data:{ labels:['HPE-Led','3rd Party','Partner-Led','Sales'], datasets:[{ data:[78,58,33,1], backgroundColor:['#3b82f6','#01a982','#f59e0b','#555a6a'], borderWidth:0, hoverOffset:4 }] },
+  options:{ responsive:true, maintainAspectRatio:false, cutout:'58%', plugins:{ legend:{display:false} } },
+  plugins:[pctPlugin]
+});
+
+new Chart(document.getElementById('c8'), {
+  type:'bar',
+  data:{
+    labels:['BRA: HPE Net. Day','MEX: CIC Santa Clara','MEX: VeeamOn TOUR','BRA: 1:1 Meetings','BRA: 4CIO Sul','COL: HPEAN Day BQ','CR: HPEAN Day','MEX: C-VISION'],
+    datasets:[
+      { label:'Investment', data:[323207,55000,5000,2000,17000,4500,9000,15000], backgroundColor:'rgba(59,130,246,0.5)', borderColor:'#3b82f6', borderWidth:1 },
+      { label:'Pipeline',   data:[6277298,1341939,854367,800000,550000,510392,500000,305634], backgroundColor:'rgba(1,169,130,0.6)', borderColor:'#01a982', borderWidth:1 }
+    ]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>' $'+Math.round(c.raw||0).toLocaleString()}} },
+    scales:{ x:{grid:{color:grid}, ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}, y:{grid:{display:false}, ticks:{font:{size:10}}} }
+  }
+});
+
+new Chart(document.getElementById('c9'), {
+  type:'bar',
+  data:{ labels:['Pipeline Gen','New Business','Accel. Business','Brand Awareness','Enablement'], datasets:[{ data:[72,14,14,13,5], backgroundColor:['#3b82f6','#01a982','#f97316','#8b5cf6','#555a6a'], borderWidth:0 }] },
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{grid:{color:grid}}, y:{grid:{color:grid}} } },
+  plugins:[barLabelPlugin]
+});
+
+new Chart(document.getElementById('c10'), {
+  type:'bar',
+  data:{
+    labels:['BRA Q4','BRA Q1','BRA Q2','MCA Q4','MCA Q1','MCA Q2','MEX Q4','MEX Q1','MEX Q2'],
+    datasets:[
+      { label:'Completed', data:[1,18,12,5,15,5,7,13,5], backgroundColor:'#01a982' },
+      { label:'Scheduled', data:[0,0,19,0,1,13,0,0,2],   backgroundColor:'#3b82f6' },
+      { label:'Declined',  data:[0,11,20,0,3,0,0,1,1],   backgroundColor:'#ef4444' },
+      { label:'Cancelled', data:[0,7,0,0,2,2,0,1,1],     backgroundColor:'#f59e0b' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{ x:{stacked:true,grid:{color:grid},ticks:{font:{size:10}}}, y:{stacked:true,grid:{color:grid}} },
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{title:t=>'Region · Quarter: '+t[0].label, label:c=>' '+c.dataset.label+': '+c.raw}} }
+  },
+  plugins:[barLabelPlugin]
+});
+
+new Chart(document.getElementById('c11'), {
+  type:'bar',
+  data:{
+    labels:['Brazil','MCA','Mexico'],
+    datasets:[
+      { label:'Customer Only',         data:[61,19,26], backgroundColor:'#3b82f6' },
+      { label:'Customer & Partner',    data:[16,14,2],  backgroundColor:'#01a982' },
+      { label:'Partner Only',          data:[2,10,4],   backgroundColor:'#f59e0b' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{ x:{stacked:true,grid:{color:grid}}, y:{stacked:true,grid:{color:grid}} },
+    plugins:{ legend:{display:false} }
+  },
+  plugins:[{
+    id:'pctBar11',
+    afterDatasetDraw(chart,args){
+      const {ctx}=chart;
+      const meta=chart.getDatasetMeta(args.index);
+      if(meta.type!=='bar') return;
+      const totals=[79,43,32];
+      meta.data.forEach((bar,i)=>{
+        const val=chart.data.datasets[args.index].data[i];
+        if(!val||val<2) return;
+        const pct=Math.round(val/totals[i]*100);
+        ctx.save();
+        ctx.fillStyle='rgba(255,255,255,0.92)';
+        ctx.font="10px 'Source Sans 3',Arial,sans-serif";
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(pct+'%', bar.x, bar.y+(bar.height/2||10));
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+new Chart(document.getElementById('c12'), {
+  type:'bar',
+  data:{
+    labels:['Brazil','MCA','Mexico','FY25 Q4','FY26 Q1','FY26 Q2'],
+    datasets:[
+      { label:'In-person',      data:[61,35,29,11,47,66], backgroundColor:'#3b82f6' },
+      { label:'Online/Virtual', data:[7,1,1,0,7,5],       backgroundColor:'#01a982' },
+      { label:'Hybrid',         data:[1,0,0,0,1,0],       backgroundColor:'#f59e0b' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{ x:{grid:{color:grid}}, y:{grid:{color:grid}} },
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw}} }
+  },
+  plugins:[{
+    id:'pctBar12',
+    afterDatasetDraw(chart,args){
+      const {ctx}=chart;
+      const meta=chart.getDatasetMeta(args.index);
+      if(meta.type!=='bar') return;
+      const totals=[69,36,30,11,55,71];
+      meta.data.forEach((bar,i)=>{
+        const val=chart.data.datasets[args.index].data[i];
+        if(!val||val<1) return;
+        const pct=Math.round(val/totals[i]*100);
+        ctx.save();
+        ctx.fillStyle='#333333';
+        ctx.font="10px 'Source Sans 3',Arial,sans-serif";
+        ctx.textAlign='center';
+        ctx.textBaseline='bottom';
+        ctx.fillText(pct+'%', bar.x, bar.y-2);
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+new Chart(document.getElementById('c13'), {
+  type:'bar',
+  data:{
+    labels:['MCA','Brazil','Mexico','FY25 Q4','FY26 Q1','FY26 Q2'],
+    datasets:[{
+      label:'% MQL Converted',
+      data:[80.8,79.2,47.3,79.2,79.9,0],
+      backgroundColor:['#01a982','#3b82f6','#f59e0b','#01a982','#8b5cf6','#cccccc'],
+      borderWidth:0
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{grid:{color:grid}},
+      y:{grid:{color:grid}, max:100, ticks:{callback:v=>v+'%'}}
+    },
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>' '+c.raw.toFixed(1)+'%'}}
+    }
+  },
+  plugins:[{
+    id:'pctLabel13',
+    afterDatasetDraw(chart){
+      const {ctx}=chart;
+      chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+        const val=chart.data.datasets[0].data[i];
+        if(!val) return;
+        ctx.save();
+        ctx.fillStyle='#333333';
+        ctx.font="bold 11px 'Source Sans 3',Arial,sans-serif";
+        ctx.textAlign='center';
+        ctx.textBaseline='bottom';
+        ctx.fillText(val.toFixed(1)+'%', bar.x, bar.y-3);
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+new Chart(document.getElementById('c14'), {
+  type:'bar',
+  data:{
+    labels:[
+      'BRA: HPE Net. Day','BRA: 1:1 Meetings BRA','BRA: CONFUT Nordeste','BRA: 4CIO Sul','BRA: 1:1 Meetings RJ',
+      'MEX: VeeamOn TOUR','MEX: CIC Santa Clara','MEX: C-VISION','MEX: F1 Superfan','MEX: 1:1 New Year','MEX: Fin Svcs Tech',
+      'MCA: HPEAN Day BQ','MCA: CR HPEAN Day','MCA: ANDICOM','MCA: CIC Clientes','MCA: HPEAN Summit PER'
+    ],
+    datasets:[{
+      label:'ROI (x)',
+      data:[560.1,400.0,66.7,45.8,10.0, 170.9,67.1,20.4,8.3,7.1,1.4, 113.4,55.6,50.0,18.4,15.9],
+      backgroundColor:[
+        '#3b82f6','#3b82f6','#3b82f6','#3b82f6','#3b82f6',
+        '#f59e0b','#f59e0b','#f59e0b','#f59e0b','#f59e0b','#f59e0b',
+        '#01a982','#01a982','#01a982','#01a982','#01a982'
+      ],
+      borderWidth:0
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{grid:{color:grid}, ticks:{callback:v=>v+'x'}},
+      y:{grid:{display:false}, ticks:{font:{size:9}}}
+    },
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>' ROI: '+c.raw+'x'}}
+    }
+  },
+  plugins:[{
+    id:'roiLabel',
+    afterDatasetDraw(chart){
+      const {ctx}=chart;
+      chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+        const val=chart.data.datasets[0].data[i];
+        ctx.save();
+        ctx.fillStyle='rgba(255,255,255,0.92)';
+        ctx.font="9px 'Source Sans 3',Arial,sans-serif";
+        ctx.textAlign='left';
+        ctx.textBaseline='middle';
+        ctx.fillText(val+'x', bar.x+4, bar.y);
+        ctx.restore();
+      });
+    }
+  }]
+});
+</script>
+</body>
+</html>
